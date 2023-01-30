@@ -10,37 +10,44 @@ dotenv.config();
 const app = express();
 app.use(cors({ origin: "*" })); // process.env.ORIGIN
 
-// const server = http.createServer(app);
-// const io = new Server(server, {
-//   cors: {
-//     origin: process.env.ORIGIN,
-//     methods: ["GET", "POST"],
+const server = http.createServer(app);
+const socket = new Server(server);
+
+socket.on("connect", (socket) => {
+  console.log("user connected: ", socket.id);
+
+  socket.on("location", async (data) => {
+    console.log("location from mobile", data);
+  });
+});
+
+server.listen(process.env.PORT, () => {
+  console.log("SERVER RUNNING ON PORT ", process.env.PORT);
+});
+
+// const kafka = new Kafka({
+//   brokers: [process.env.BROKERS],
+//   ssl: true,
+//   sasl: {
+//     mechanism: "plain",
+//     username: process.env.USERNAME,
+//     password: process.env.PASSWORD,
 //   },
+//   logLevel: logLevel.NOTHING,
 // });
 
-const kafka = new Kafka({
-  brokers: [process.env.BROKERS],
-  ssl: true,
-  sasl: {
-    mechanism: "plain",
-    username: process.env.USERNAME,
-    password: process.env.PASSWORD,
-  },
-  logLevel: logLevel.NOTHING,
-});
+// const producer = kafka.producer();
 
-const producer = kafka.producer();
-
-app.get("/start/:id", async (req, res) => {
-  console.log(req.params.id);
-  await producer.connect();
-  await producer.send({
-    topic: "path",
-    messages: [{ value: req.params.id }],
-  });
-  await producer.disconnect();
-  res.status(200).send({ product: req.params.id });
-});
+// app.get("/start/:id", async (req, res) => {
+//   console.log(req.params.id);
+//   await producer.connect();
+//   await producer.send({
+//     topic: "path",
+//     messages: [{ value: req.params.id }],
+//   });
+//   await producer.disconnect();
+//   res.status(200).send({ product: req.params.id });
+// });
 
 // io.on("connect", (socket) => {
 //   console.log("user connected: ", socket.id);
@@ -50,6 +57,6 @@ app.get("/start/:id", async (req, res) => {
 //   });
 // });
 
-app.listen(process.env.PORT, () => {
-  console.log("SERVER RUNNING ON PORT ", process.env.PORT);
-});
+// app.listen(process.env.PORT, () => {
+//   console.log("SERVER RUNNING ON PORT ", process.env.PORT);
+// });
