@@ -34,7 +34,7 @@ socket.on("connect", (socket) => {
     await producer.connect();
     await producer.send({
       topic: "location",
-      messages: [{ value: data }],
+      messages: [{ value: JSON.stringify(data) }],
     });
     await producer.disconnect();
   });
