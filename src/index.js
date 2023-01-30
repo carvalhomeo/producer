@@ -8,35 +8,41 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: "*" })); // process.env.ORIGIN
+app.use(cors({ origin: "*" }));
 
 const server = http.createServer(app);
 const socket = new Server(server);
+
+const kafka = new Kafka({
+  brokers: [process.env.BROKERS],
+  ssl: true,
+  sasl: {
+    mechanism: "plain",
+    username: process.env.USERNAME,
+    password: process.env.PASSWORD,
+  },
+  logLevel: logLevel.NOTHING,
+});
+
+const producer = kafka.producer();
 
 socket.on("connect", (socket) => {
   console.log("user connected: ", socket.id);
 
   socket.on("location", async (data) => {
     console.log("location from mobile", data);
+    await producer.connect();
+    await producer.send({
+      topic: "location",
+      messages: [{ value: data }],
+    });
+    await producer.disconnect();
   });
 });
 
 server.listen(process.env.PORT, () => {
   console.log("SERVER RUNNING ON PORT ", process.env.PORT);
 });
-
-// const kafka = new Kafka({
-//   brokers: [process.env.BROKERS],
-//   ssl: true,
-//   sasl: {
-//     mechanism: "plain",
-//     username: process.env.USERNAME,
-//     password: process.env.PASSWORD,
-//   },
-//   logLevel: logLevel.NOTHING,
-// });
-
-// const producer = kafka.producer();
 
 // app.get("/start/:id", async (req, res) => {
 //   console.log(req.params.id);
